@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import User from '../models/user.js';
 
 /*
 add a new user
@@ -20,13 +20,7 @@ sample input:
 
 const addUser = async (req, res) => {
   try {
-    const userData = req.body; 
-    const fields = Object.keys(userData);
-    const values = Object.values(userData); 
-    const placeholders = fields.map((_, i) => `$${i + 1}`).join(',');
-    const query = `INSERT INTO user_account (${fields.join(',')}) VALUES(${placeholders}) RETURNING *`;
-    const newUser = await pool.query(query, values);
-
+    const newUser = await User.create(req.body);
     res.json(newUser.rows[0]);
   } catch (error) {
     console.error(error.message);
@@ -34,16 +28,16 @@ const addUser = async (req, res) => {
   }
 };
 
+
 // get an existing user
 const getUser = async (req, res) => {
   try {
-      const { user_id } = req.params;
-      const existingUser = await pool.query('SELECT * FROM user_account WHERE user_id = $1', [user_id]);
-      
-      res.json(existingUser.rows[0]);
+    const { user_id } = req.params;
+    const existingUser = await User.get(user_id);
+    res.json(existingUser.rows[0]);
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Server error.');
+    console.error(error.message);
+    res.status(500).send('Server error.');
   }
 };
 
@@ -61,28 +55,24 @@ sample input:
 
 const updateUser = async (req, res) => {
   try {
-      const { user_id } = req.params;
-      const { username, contact_number, display_picture, password } = req.body;
-      const query = 'UPDATE user_account SET username = $1, contact_number = $2, display_picture = $3, password = $4 WHERE user_id = $5';
-      await pool.query(query, [username, contact_number, display_picture, password, user_id]);
-      
-      res.status(200).send("Successfully updated user.");
+    const { user_id } = req.params;
+    await User.update(user_id, req.body);
+    res.status(200).send("Successfully updated user.");
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Server error.');
+    console.error(error.message);
+    res.status(500).send('Server error.');
   }
 };
 
 // delete an existing user
 const deleteUser = async (req, res) => {
   try {
-      const { user_id } = req.params;
-      await pool.query("DELETE FROM user_account WHERE user_id = $1", [user_id]);
-      
-      res.status(200).send("Successfully deleted user.");
+    const { user_id } = req.params;
+    await User.delete(user_id);
+    res.status(200).send("Successfully deleted user.");
   } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server error.');
+    console.error(error.message);
+    res.status(500).send('Server error.');
   }
 };
 
